@@ -1,5 +1,5 @@
-import React, { Component } from 'react';
-import { ChatMessage, RoleType, ApplicationContext, ChatKitInterface, EventStreamMessage } from '../types';
+import { Component } from 'react';
+import { ChatMessage, RoleType, ApplicationContext, ChatKitInterface, EventStreamMessage, ChatMessageType } from '../types';
 import MessageList from './MessageList';
 import InputArea from './InputArea';
 
@@ -122,7 +122,7 @@ export abstract class ChatKitBase<P extends ChatKitBaseProps = ChatKitBaseProps>
     const userMessage: ChatMessage = {
       messageId: `user-${Date.now()}`,
       content: text,
-      type: 'Text' as any,  // 临时使用 any，后续需要统一类型
+      type: ChatMessageType.TEXT,
       role: {
         name: '用户',
         type: RoleType.USER,

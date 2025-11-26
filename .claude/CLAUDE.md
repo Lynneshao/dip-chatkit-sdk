@@ -14,7 +14,7 @@
 - 使用 TypeScript 作为开发语言，使用 ReactJS 和 Tailwind 作为框架
 - 能够支持流式数据响应。具体的流式数据处理方法由 ChatKitCoze 组件继承并实现 reduceEventStreamMessage() 方法来决定。ChatKitBase 只需要实现在接收到 EventStream 时调用 reduceEventStreamMessage() 方法并打印到界面上的标准处理逻辑。
 - 接收 EventSteam 时，在闭包中处理数据流，并在全部处理完成后丢弃掉闭包。
-- AI 助手返回 Text 类型的消息时，渲染 Markdown。注意：必须使用 reduceMarkdownBlock 在每次 Token 积累得到可增量渲染的 Markdown 内容块的时候才触发渲染。
+- AI 助手返回 Text 类型的消息时，渲染 Markdown。
 
 # ChatKitCoze 组件
 ChatKitCoze 组件是专门适配 Coze 平台智能体 API 的智能体对话组件。
@@ -32,16 +32,6 @@ demo 是一个简单的 Web 应用，该应用需要挂载 ChatKitCoze 组件。
     }
 }
 ```
-
-# helper
-## reduceMarkdownBlock(token, prevBuffer): string
-在每次追加 Token 后对 prevBuffer 进行解析，当在能够形成完整的 Markdown 可渲染块的时候返回更新的内容。
-
-|  参数  |   说明     |
-|   --  |     --     |
-|  token | 当次追加的 token |
-|  prevBuffer | 之前已经积累的 Token |
-
 
 **开发**
 注意：

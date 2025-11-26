@@ -10,7 +10,8 @@
       "Bash(find:*)",
       "Bash(mkdir:*)",
       "Bash(rm:*)",
-      "WebFetch(domain:accounts.feishu.cn)"
+      "WebFetch(domain:accounts.feishu.cn)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

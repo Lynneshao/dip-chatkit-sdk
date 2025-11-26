@@ -10,5 +10,11 @@ export type { ChatKitBaseProps, ChatKitBaseState } from './components/ChatKitBas
 export { ChatKitCoze } from './components/ChatKitCoze';
 export type { ChatKitCozeProps } from './components/ChatKitCoze';
 
-export { Role } from './types';
-export type { Message, InputContext, ChatKitInterface, EventStreamMessage } from './types';
+export { RoleType, ChatMessageType } from './types';
+export type {
+  Role,
+  ChatMessage,
+  ApplicationContext,
+  ChatKitInterface,
+  EventStreamMessage,
+} from './types';

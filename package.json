@@ -10,12 +10,20 @@
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
-  "keywords": ["chat", "ai", "react", "component"],
+  "keywords": [
+    "chat",
+    "ai",
+    "react",
+    "component"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-markdown": "^10.1.0",
+    "rehype-highlight": "^7.0.2",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
