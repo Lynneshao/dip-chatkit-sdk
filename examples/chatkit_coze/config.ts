@@ -7,10 +7,10 @@ export const COZE_CONFIG = {
   baseUrl: 'https://api.coze.cn',
 
   /** 你的扣子 Bot ID */
-  botId: '',
+  botId: '7570255081065660468',
 
   /** 你的扣子 API Token (Personal Access Token) */
-  apiToken: '',
+  apiToken: 'pat_wGyWHojZkyhhnL2nX7fOgm5x9YLojLK09FlWK3mpnixSwD8stZToochkrYzQFCNn',
 
   /** 用户 ID,可以是任意字符串 */
   userId: 'chatkit-demo-user',

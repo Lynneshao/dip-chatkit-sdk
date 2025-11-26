@@ -1,4 +1,4 @@
-import { COZE_CONFIG } from '../config';
+import { COZE_CONFIG } from '../../chatkit_coze/config';
 import { Message, Role, InputContext, EventStreamMessage } from '../../../src/types';
 
 /**
@@ -134,7 +134,7 @@ export async function sendMessageToCoze(
 ): Promise<{ message: Message; conversationId: string }> {
   // 检查配置
   if (COZE_CONFIG.botId === 'YOUR_BOT_ID' || COZE_CONFIG.apiToken === 'YOUR_API_TOKEN') {
-    throw new Error('请先在 examples/src/config.ts 中配置你的扣子 API 信息');
+    throw new Error('请先在 examples/chatkit_coze/config.ts 中配置你的扣子 API 信息');
   }
 
   // 构造上下文信息

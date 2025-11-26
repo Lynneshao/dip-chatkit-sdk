@@ -10,4 +10,15 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    proxy: {
+      // 将本地 /data-agent 前缀的请求代理到 Data Agent 服务,解决本地开发时的 CORS
+      '/data-agent': {
+        target: 'https://dip.aishu.cn:443/api/agent-app/v1',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (p) => p.replace(/^\/data-agent/, ''),
+      },
+    },
+  },
 })

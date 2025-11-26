@@ -10,6 +10,9 @@ export type { ChatKitBaseProps, ChatKitBaseState } from './components/ChatKitBas
 export { ChatKitCoze } from './components/ChatKitCoze';
 export type { ChatKitCozeProps } from './components/ChatKitCoze';
 
+export { ChatKitDataAgent } from './components/ChatKitDataAgent';
+export type { ChatKitDataAgentProps } from './components/ChatKitDataAgent';
+
 export { RoleType, ChatMessageType } from './types';
 export type {
   Role,
