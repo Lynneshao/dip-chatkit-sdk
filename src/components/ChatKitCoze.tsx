@@ -21,12 +21,19 @@ export interface ChatKitCozeProps extends ChatKitBaseProps {
 /**
  * ChatKitCoze 组件
  * 专门适配扣子(Coze) API 的智能体对话组件
- * 继承自 ChatKitBase,实现了 sendMessage 和 reduceEventStreamMessage 方法
+ * 继承自 ChatKitBase,实现了 generateConversation、sendMessage 和 reduceEventStreamMessage 方法
  */
 export class ChatKitCoze extends ChatKitBase<ChatKitCozeProps> {
+  /** 扣子 Bot ID */
   private botId: string;
+
+  /** 扣子 API Token */
   private apiToken: string;
+
+  /** 扣子 API 基础 URL */
   private baseUrl: string;
+
+  /** 用户 ID */
   private userId: string;
 
   constructor(props: ChatKitCozeProps) {
@@ -39,12 +46,50 @@ export class ChatKitCoze extends ChatKitBase<ChatKitCozeProps> {
   }
 
   /**
+   * 创建新的会话
+   * 调用扣子 API 创建新的会话，返回会话 ID
+   * 注意：该方法是一个无状态无副作用的函数，不允许修改 state
+   * @returns 返回新创建的会话 ID
+   */
+  public async generateConversation(): Promise<string> {
+    try {
+      console.log('正在创建扣子会话...');
+
+      const response = await fetch(`${this.baseUrl}/v1/conversation/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiToken}`,
+        },
+        body: JSON.stringify({}),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`创建扣子会话失败: ${response.status} - ${errorText}`);
+      }
+
+      const result = await response.json();
+      const conversationId = result.data?.id || result.conversation_id || '';
+
+      console.log('扣子会话创建成功, conversationID:', conversationId);
+      return conversationId;
+    } catch (error) {
+      console.error('创建扣子会话失败:', error);
+      // 返回空字符串，允许在没有会话 ID 的情况下继续（扣子 v3 API 支持自动创建会话）
+      return '';
+    }
+  }
+
+  /**
    * 向扣子后端发送消息 (流式响应)
+   * 注意：该方法是一个无状态无副作用的函数，不允许修改 state
    * @param text 发送给后端的用户输入的文本
    * @param ctx 随用户输入文本一起发送的应用上下文
+   * @param conversationID 发送的对话消息所属的会话 ID
    * @returns 返回发送的消息结构
    */
-  public async sendMessage(text: string, ctx: ApplicationContext): Promise<ChatMessage> {
+  public async sendMessage(text: string, ctx: ApplicationContext, conversationID?: string): Promise<ChatMessage> {
     // 构造上下文信息
     let fullMessage = text;
     if (ctx && ctx.title) {
@@ -63,13 +108,18 @@ export class ChatKitCoze extends ChatKitBase<ChatKitCozeProps> {
           content_type: 'text',
         },
       ],
-      conversation_id: this.state.conversationID || undefined,
     };
 
-    try {
-      console.log('发起流式 Chat 请求:', requestBody);
+    // 构造请求 URL，conversation_id 作为 Query Param 传递
+    let chatUrl = `${this.baseUrl}/v3/chat`;
+    if (conversationID) {
+      chatUrl += `?conversation_id=${encodeURIComponent(conversationID)}`;
+    }
 
-      const response = await fetch(`${this.baseUrl}/v3/chat`, {
+    try {
+      console.log('发起流式 Chat 请求:', { url: chatUrl, body: requestBody });
+
+      const response = await fetch(chatUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

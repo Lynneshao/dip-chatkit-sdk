@@ -90,16 +90,28 @@ export interface EventStreamMessage {
  */
 export interface ChatKitInterface {
   /**
+   * 新建会话
+   * 该方法需要由子类继承并重写，以适配扣子、Dify 等 LLMOps 平台的接口
+   * 成功返回会话 ID
+   * 注意：该方法是一个无状态无副作用的函数，不允许修改 state
+   * @returns 返回新创建的会话 ID
+   */
+  generateConversation(): Promise<string>;
+
+  /**
    * 向后端发送消息
    * 该方法需要由开发者实现，以适配扣子、Dify等 LLMOps 平台的接口
    * 发送成功后，返回发送的消息结构
+   * 注意：该方法是一个无状态无副作用的函数，不允许修改 state
    * @param text 发送给后端的用户输入的文本
    * @param ctx 随用户输入文本一起发送的应用上下文
+   * @param conversationID 发送的对话消息所属的会话 ID
    * @returns 返回发送的消息结构
    */
   sendMessage(
     text: string,
-    ctx: ApplicationContext
+    ctx: ApplicationContext,
+    conversationID?: string
   ): Promise<ChatMessage>;
 
   /**
@@ -107,6 +119,7 @@ export interface ChatKitInterface {
    * 当接收到 SSE 消息时触发，该方法需要由开发者实现
    * 将不同的 API 接口返回的 SSE 进行解析成 ChatKit 组件能够处理的标准数据格式后返回
    * 返回解析并积累起来后的 buffer，该 buffer 可以被直接打印到界面上
+   * 注意：该方法是一个无状态无副作用的函数，不允许修改 state
    * @param eventMessage 接收到的一条 EventStreamMessage
    * @param prevBuffer 之前已经堆积起来的文本
    * @returns 返回解析并积累起来后的 buffer

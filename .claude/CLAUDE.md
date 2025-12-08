@@ -19,9 +19,11 @@
 
 # ChatKitCoze 组件
 ChatKitCoze 组件是专门适配 Coze 平台智能体 API 的智能体对话组件。
-ChatKitCoze 组件继承了 ChatKitBase 和 ChatKitInterface，ChatKitCoze 需要实现 ChatKitInterface 里的两个方法：
+ChatKitCoze 组件继承了 ChatKitBase 和 ChatKitInterface，ChatKitCoze 需要实现 ChatKitInterface 里的方法：
 * sendMessage(): 调用扣子（Coze）的 API 实现对话的后端逻辑，API 文档参考：https://www.coze.cn/open/docs/developer_guides/chat_v3
 * reduceEventStreamMessage(): 解析扣子（Coze）输出的 EventStreamMessage，追加并返回字符串以供界面实现打字机效果。 
+* generateConversation(): 创建新的会话 ID
+注意：conversation_id 是在 URL 中的参数。
 
 # ChatKitCoze Demo
 ChatKitCoze Demo 是一个简单的 Web 应用，该应用需要挂载 ChatKitCoze 组件。ChatKitCoze Demo 应用上有两个主要按钮：

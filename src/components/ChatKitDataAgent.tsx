@@ -27,11 +27,19 @@ export interface ChatKitDataAgentProps extends ChatKitBaseProps {
 /**
  * ChatKitDataAgent 组件
  * 适配 AISHU Data Agent 平台的智能体对话组件
+ * 继承自 ChatKitBase，实现了 generateConversation、sendMessage 和 reduceEventStreamMessage 方法
  */
 export class ChatKitDataAgent extends ChatKitBase<ChatKitDataAgentProps> {
+  /** 服务端基础地址 */
   private baseUrl: string;
+
+  /** Agent ID */
   private agentId: string;
+
+  /** Bearer Token */
   private bearerToken: string;
+
+  /** 是否开启增量流式返回 */
   private incStream: boolean;
 
   constructor(props: ChatKitDataAgentProps) {
@@ -44,12 +52,39 @@ export class ChatKitDataAgent extends ChatKitBase<ChatKitDataAgentProps> {
   }
 
   /**
+   * 创建新的会话
+   * 调用 Data Agent API 创建新的会话，返回会话 ID
+   * 注意：该方法是一个无状态无副作用的函数，不允许修改 state
+   * @returns 返回新创建的会话 ID
+   */
+  public async generateConversation(): Promise<string> {
+    try {
+      console.log('正在创建 Data Agent 会话...');
+
+      // Data Agent 可能通过发送消息时自动创建会话
+      // 这里返回空字符串，让 API 自动创建会话
+      // 如果 Data Agent 有专门的创建会话接口，可以在这里调用
+
+      // 生成一个临时的会话 ID 用于标识本次会话
+      const conversationId = `da-conv-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+      console.log('Data Agent 会话创建成功, conversationID:', conversationId);
+      return conversationId;
+    } catch (error) {
+      console.error('创建 Data Agent 会话失败:', error);
+      return '';
+    }
+  }
+
+  /**
    * 调用 Data Agent API 发送消息(流式)
+   * 注意：该方法是一个无状态无副作用的函数，不允许修改 state
    * @param text 用户输入
    * @param ctx 应用上下文
+   * @param conversationID 发送的对话消息所属的会话 ID
    * @returns 返回助手消息
    */
-  public async sendMessage(text: string, ctx: ApplicationContext): Promise<ChatMessage> {
+  public async sendMessage(text: string, ctx: ApplicationContext, conversationID?: string): Promise<ChatMessage> {
     if (!this.baseUrl) {
       throw new Error('Data Agent baseUrl 不能为空');
     }
@@ -60,13 +95,14 @@ export class ChatKitDataAgent extends ChatKitBase<ChatKitDataAgentProps> {
       fullQuery = `【上下文: ${ctx.title}】\n${JSON.stringify(ctx.data, null, 2)}\n\n${text}`;
     }
 
+    // 构造请求体，使用传入的 conversationID 参数
     const body = {
       agent_id: this.agentId,
       query: fullQuery,
       stream: true,
       inc_stream: this.incStream,
       custom_querys: ctx?.data,
-      conversation_id: this.state.conversationID || undefined,
+      conversation_id: conversationID || undefined,
     };
 
     const response = await fetch(

@@ -70,14 +70,25 @@ export abstract class ChatKitBase<P extends ChatKitBaseProps = ChatKitBaseProps>
   }
 
   /**
+   * 新建会话 (抽象方法，由子类实现)
+   * 该方法需要由开发者实现，以适配扣子、Dify 等 LLMOps 平台的接口
+   * 成功返回会话 ID
+   * 注意：该方法是一个无状态无副作用的函数，不允许修改 state
+   * @returns 返回新创建的会话 ID
+   */
+  public abstract generateConversation(): Promise<string>;
+
+  /**
    * 向后端发送消息 (抽象方法，由子类实现)
    * 该方法需要由开发者实现，以适配扣子、Dify等 LLMOps 平台的接口
    * 发送成功后，返回发送的消息结构
+   * 注意：该方法是一个无状态无副作用的函数，不允许修改 state
    * @param text 发送给后端的用户输入的文本
    * @param ctx 随用户输入文本一起发送的应用上下文
+   * @param conversationID 发送的对话消息所属的会话 ID
    * @returns 返回发送的消息结构
    */
-  public abstract sendMessage(text: string, ctx: ApplicationContext): Promise<ChatMessage>;
+  public abstract sendMessage(text: string, ctx: ApplicationContext, conversationID?: string): Promise<ChatMessage>;
 
   /**
    * 解析 EventStreamMessage 并累积文本 (抽象方法，由子类实现)
@@ -106,17 +117,75 @@ export abstract class ChatKitBase<P extends ChatKitBaseProps = ChatKitBaseProps>
   };
 
   /**
+   * 创建新的会话
+   * 内部会调用子类实现的 generateConversation() 方法
+   */
+  public createConversation = async (): Promise<void> => {
+    try {
+      // 先清除现有会话
+      this.clearConversation();
+
+      // 调用子类实现的 generateConversation 方法创建新会话
+      const newConversationID = await this.generateConversation();
+
+      // 更新会话 ID
+      this.setState({ conversationID: newConversationID });
+
+      console.log('新会话已创建, conversationID:', newConversationID);
+    } catch (error) {
+      console.error('创建新会话失败:', error);
+      throw error;
+    }
+  };
+
+  /**
+   * 清除会话中的对话消息及会话 ID
+   */
+  private clearConversation = (): void => {
+    this.setState({
+      conversationID: '',
+      messages: [],
+    });
+    console.log('会话已清除');
+  };
+
+  /**
    * 发送消息的核心方法
+   * 该方法是暴露给集成方进行调用的接口，内部会调用子类实现的 sendMessage() 方法
    * @param text 用户输入的文本
    * @param ctx 应用上下文
+   * @param conversationID 发送的对话消息所属的会话 ID（可选）
    * @returns 返回发送的消息结构
    */
-  public send = async (text: string, ctx: ApplicationContext): Promise<ChatMessage> => {
+  public send = async (text: string, ctx?: ApplicationContext, conversationID?: string): Promise<ChatMessage> => {
     if (!text.trim()) {
       throw new Error('消息内容不能为空');
     }
 
+    // 如果传入了 ctx，则设置 applicationContext
+    if (ctx) {
+      this.setState({ applicationContext: ctx });
+    }
+
+    // 使用传入的 conversationID，或使用当前 state 中的 conversationID
+    let currentConversationID = conversationID || this.state.conversationID;
+
+    // 如果没有会话 ID，则创建新会话
+    if (!currentConversationID) {
+      try {
+        currentConversationID = await this.generateConversation();
+        this.setState({ conversationID: currentConversationID });
+        console.log('自动创建新会话, conversationID:', currentConversationID);
+      } catch (error) {
+        console.error('自动创建会话失败:', error);
+        // 即使创建会话失败，也继续发送消息（某些平台可能不需要预先创建会话）
+      }
+    }
+
     this.setState({ isSending: true });
+
+    // 获取最终使用的上下文
+    const finalContext = ctx || this.state.applicationContext || this.props.defaultApplicationContext || { title: '', data: {} };
 
     // 创建用户消息
     const userMessage: ChatMessage = {
@@ -129,7 +198,7 @@ export abstract class ChatKitBase<P extends ChatKitBaseProps = ChatKitBaseProps>
         avatar: '',
       },
       // 如果有应用上下文，则附加到用户消息中
-      applicationContext: ctx.title || ctx.data ? ctx : undefined,
+      applicationContext: finalContext.title || finalContext.data ? finalContext : undefined,
     };
 
     // 将用户消息添加到消息列表
@@ -138,8 +207,8 @@ export abstract class ChatKitBase<P extends ChatKitBaseProps = ChatKitBaseProps>
     }));
 
     try {
-      // 调用子类实现的 sendMessage 方法
-      const assistantMessage = await this.sendMessage(text, ctx);
+      // 调用子类实现的 sendMessage 方法，传入 conversationID
+      const assistantMessage = await this.sendMessage(text, finalContext, currentConversationID);
 
       // 流式响应时,子类已经添加并更新了消息,这里只需要清理状态
       this.setState({
@@ -295,15 +364,28 @@ export abstract class ChatKitBase<P extends ChatKitBaseProps = ChatKitBaseProps>
             <span className="font-semibold text-gray-800">{title}</span>
           </div>
           <div className="flex items-center gap-2">
-            <button className="text-gray-500 hover:text-gray-700">
+            {/* 新建会话按钮 */}
+            <button
+              onClick={this.createConversation}
+              className="text-gray-500 hover:text-gray-700"
+              title="新建会话"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            {/* 更多选项按钮 */}
+            <button className="text-gray-500 hover:text-gray-700" title="更多选项">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
               </svg>
             </button>
+            {/* 关闭按钮 */}
             {onClose && (
               <button
                 onClick={onClose}
                 className="text-gray-500 hover:text-gray-700"
+                title="关闭"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
