@@ -78,3 +78,24 @@ ChatKitDataAgent Demo 是一个简单的 Web 应用，该应用需要挂载 Chat
 - ChatKitDataAgent Demo 代码放在 examples/chatkit_data_agent 目录下
 - Agent ID：01KAZKS30H0X0D8Z8K25VKSJ98
 - Bearer Token：Bearer ory_at_LU6V6kGsQzXr1KGPxpTUW7NCHLz6htpGdu1j-LxdFRs.dvr0I51xaN5XHZOwyTTZTv3eTuMh-Qmh5Hkt3f-z5go
+
+# README
+你需要在每次更新代码之后检查是否需要更新 README。
+
+**项目介绍**
+- 固定内容如下：ChatKit 是一个 AI 对话组件。Web 应用开发者可以将 ChatKit 集成到自己的前端代码中,并通过传入与用户输入有关的上下文对象,实现对 Web 应用中有关的信息发起 AI 对话。
+
+**项目结构**
+- 只包含提交到 Git 的目录结构。
+
+**快速开始**
+- 包括安装、启动，以及 Coze 和 Data Agent 的配置
+
+**API**
+- 只需要包含实现设计中的 props 和修饰符为 public 的方法。
+
+**技术栈**
+- 描述使用的技术栈
+
+**协议**
+- 采用 MIT 协议
