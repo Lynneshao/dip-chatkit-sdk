@@ -49,6 +49,9 @@ export interface ChatKitBaseState {
 
   /** 开场白信息，包含开场白文案和预置问题 */
   onboardingInfo?: OnboardingInfo;
+
+  /** 是否正在加载开场白信息 */
+  isLoadingOnboarding: boolean;
 }
 
 /**
@@ -61,6 +64,13 @@ export interface ChatKitBaseState {
  * 该类实现了 ChatKitInterface 接口，子类需要实现 sendMessage 和 reduceEventStreamMessage 方法
  */
 export abstract class ChatKitBase<P extends ChatKitBaseProps = ChatKitBaseProps> extends Component<P, ChatKitBaseState> implements ChatKitInterface {
+  /**
+   * 标记是否正在初始化或已经初始化
+   * 用于防止重复初始化（特别是在 React.StrictMode 下）
+   */
+  private isInitializing = false;
+  private hasInitialized = false;
+
   constructor(props: P) {
     super(props);
 
@@ -72,7 +82,66 @@ export abstract class ChatKitBase<P extends ChatKitBaseProps = ChatKitBaseProps>
       isSending: false,
       streamingMessageId: null,
       onboardingInfo: undefined,
+      isLoadingOnboarding: false,
     };
+  }
+
+  /**
+   * 组件挂载后自动创建会话
+   * 根据设计文档要求：组件被初始化的时候会自动新建会话
+   */
+  async componentDidMount(): Promise<void> {
+    // 只在组件初次挂载且可见时自动创建会话
+    if (this.props.visible && !this.hasInitialized && !this.isInitializing) {
+      await this.initializeConversation();
+    }
+  }
+
+  /**
+   * 组件更新时检查是否需要初始化会话
+   * 当 visible 从 false 变为 true 时，如果还未初始化，则初始化会话
+   */
+  async componentDidUpdate(prevProps: P): Promise<void> {
+    // 当 visible 从 false 变为 true，且还未初始化时，初始化会话
+    if (!prevProps.visible && this.props.visible && !this.hasInitialized && !this.isInitializing) {
+      await this.initializeConversation();
+    }
+  }
+
+  /**
+   * 初始化会话的内部方法
+   * 仅在组件首次可见时调用，防止重复初始化
+   */
+  private async initializeConversation(): Promise<void> {
+    // 防止并发调用
+    if (this.isInitializing || this.hasInitialized) {
+      console.log('会话正在初始化或已初始化，跳过');
+      return;
+    }
+
+    this.isInitializing = true;
+    // 设置加载状态，防止显示默认开场白
+    this.setState({ isLoadingOnboarding: true });
+
+    try {
+      console.log('ChatKit 组件初始化，自动创建会话...');
+      await this.createConversation();
+      this.hasInitialized = true;
+    } catch (error) {
+      console.error('自动创建会话失败:', error);
+      // 即使创建会话失败，也尝试获取开场白信息
+      try {
+        const onboardingInfo = await this.getOnboardingInfo();
+        this.setState({ onboardingInfo });
+        this.hasInitialized = true;
+      } catch (e) {
+        console.error('获取开场白信息失败:', e);
+      }
+    } finally {
+      this.isInitializing = false;
+      // 加载完成，无论成功或失败都取消加载状态
+      this.setState({ isLoadingOnboarding: false });
+    }
   }
 
   /**
@@ -136,6 +205,9 @@ export abstract class ChatKitBase<P extends ChatKitBaseProps = ChatKitBaseProps>
    * 内部会调用子类实现的 generateConversation() 和 getOnboardingInfo() 方法
    */
   public createConversation = async (): Promise<void> => {
+    // 设置加载状态
+    this.setState({ isLoadingOnboarding: true });
+
     try {
       // 先清除现有会话
       this.clearConversation();
@@ -157,6 +229,9 @@ export abstract class ChatKitBase<P extends ChatKitBaseProps = ChatKitBaseProps>
     } catch (error) {
       console.error('创建新会话失败:', error);
       throw error;
+    } finally {
+      // 无论成功或失败，都取消加载状态
+      this.setState({ isLoadingOnboarding: false });
     }
   };
 
@@ -375,7 +450,7 @@ export abstract class ChatKitBase<P extends ChatKitBaseProps = ChatKitBaseProps>
     }
 
     const { title = 'Copilot', onClose } = this.props;
-    const { messages, textInput, applicationContext, isSending, onboardingInfo } = this.state;
+    const { messages, textInput, applicationContext, isSending, onboardingInfo, isLoadingOnboarding } = this.state;
     const showPrologue = messages.length === 0;
 
     return (
@@ -390,11 +465,22 @@ export abstract class ChatKitBase<P extends ChatKitBaseProps = ChatKitBaseProps>
         {/* 消息列表区域或欢迎界面 */}
         <div className="flex-1 overflow-y-auto">
           {showPrologue ? (
-            <Prologue
-              onQuestionClick={this.handleQuestionClick}
-              prologue={onboardingInfo?.prologue}
-              predefinedQuestions={onboardingInfo?.predefinedQuestions}
-            />
+            isLoadingOnboarding ? (
+              // 加载中，显示加载提示
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
+                  <p className="text-sm text-gray-500">正在加载...</p>
+                </div>
+              </div>
+            ) : (
+              // 加载完成，显示开场白
+              <Prologue
+                onQuestionClick={this.handleQuestionClick}
+                prologue={onboardingInfo?.prologue}
+                predefinedQuestions={onboardingInfo?.predefinedQuestions}
+              />
+            )
           ) : (
             <MessageList messages={messages} />
           )}
