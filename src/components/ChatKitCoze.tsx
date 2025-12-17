@@ -1,5 +1,5 @@
 import { ChatKitBase, ChatKitBaseProps } from './ChatKitBase';
-import { ChatMessage, ChatMessageType, RoleType, ApplicationContext, EventStreamMessage } from '../types';
+import { ChatMessage, ChatMessageType, RoleType, ApplicationContext, EventStreamMessage, OnboardingInfo } from '../types';
 
 /**
  * ChatKitCoze 组件的属性接口
@@ -43,6 +43,56 @@ export class ChatKitCoze extends ChatKitBase<ChatKitCozeProps> {
     this.apiToken = props.apiToken;
     this.baseUrl = props.baseUrl || 'https://api.coze.cn';
     this.userId = props.userId || 'chatkit-user';
+  }
+
+  /**
+   * 获取开场白和预置问题
+   * 调用扣子 API 获取智能体配置信息，提取开场白和预置问题
+   * API 端点: GET /v1/bots/{bot_id}
+   * 注意：该方法是一个无状态无副作用的函数，不允许修改 state
+   * @returns 返回开场白信息，包含开场白文案和预置问题
+   */
+  public async getOnboardingInfo(): Promise<OnboardingInfo> {
+    try {
+      console.log('正在获取扣子智能体配置...');
+
+      // 使用正确的 API 端点
+      const response = await fetch(`${this.baseUrl}/v1/bots/${encodeURIComponent(this.botId)}?is_published=true`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${this.apiToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`获取扣子智能体配置失败: ${response.status} - ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('扣子智能体配置响应:', result);
+
+      // 从响应中提取开场白和预置问题
+      // 根据 OpenAPI 文档，data 包含 onboarding_info 对象
+      const botInfo = result.data || {};
+      const onboardingInfoV2 = botInfo.onboarding_info || {};
+
+      const onboardingInfo: OnboardingInfo = {
+        prologue: onboardingInfoV2.prologue || '你好！我是 AI 助手，有什么可以帮你的吗？',
+        predefinedQuestions: onboardingInfoV2.suggested_questions || [],
+      };
+
+      console.log('开场白信息已提取:', onboardingInfo);
+      return onboardingInfo;
+    } catch (error) {
+      console.error('获取扣子智能体配置失败:', error);
+      // 返回默认开场白信息
+      return {
+        prologue: '你好！我是 AI 助手，有什么可以帮你的吗？',
+        predefinedQuestions: [],
+      };
+    }
   }
 
   /**

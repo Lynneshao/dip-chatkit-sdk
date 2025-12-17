@@ -1,29 +1,75 @@
 components:
   schemas:
+    CreateConversationRequest:
+      type: object
+      description: 创建会话请求体。
+      properties:
+        agent_id:
+          type: string
+          description: agent ID。
+        agent_version:
+          type: string
+          description: agent 版本，不传则默认使用最新发布版本。
+        executor_version:
+          type: string
+          description: 智能体执行服务 ID。
+      required:
+        - agent_id
+        - agent_version
+    ChatCompletionRequest:
+      type: object
+      description: 对话请求体。
+      properties:
+        agent_id:
+          type: string
+          description: agent ID。
+        agent_version:
+          type: string
+          description: agent 版本，不传则默认使用最新发布版本。
+        conversation_id:
+          type: string
+          description: 会话 ID。
+        custom_querys:
+          type: object
+          description: 自定义输入变量，map[string]any。
+        inc_stream:
+          type: boolean
+          description: 是否增量流式返回。
+        query:
+          type: string
+          description: 用户输入的问题。
+        stream:
+          type: boolean
+          description: 是否流式返回。
+      required:
+        - query
+        - agent_id
+        - conversation_id
+        - stream
     ConversationResponse:
-      description: 会话创建响应
+      description: 会话创建响应。
       type: object
       properties:
         id:
-          description: 新会话ID
+          description: 新会话 ID。
           type: string
         ttl:
-          description: 会话过期时间，单位秒
+          description: 会话过期时间，单位秒。
           type: string
     AgentInfo:
       type: object
       properties:
         agent_id:
-          description: Agent ID
+          description: Agent ID。
           type: string
         agent_name:
-          description: Agent 名称
+          description: Agent 名称。
           type: string
         agent_status:
-          description: Agent 状态
+          description: Agent 状态。
           type: string
         agent_version:
-          description: Agent 版本
+          description: Agent 版本。
           type: string
     Answer:
       type: object
@@ -40,30 +86,30 @@ components:
       type: object
       properties:
         name:
-          description: 参数名称
+          description: 参数名称。
           type: string
         type:
-          description: 参数类型
+          description: 参数类型。
           type: string
         value:
-          description: 参数值
+          description: 参数值。
           type: string
     ChatResponse:
       type: object
       properties:
         assistant_message_id:
-          description: 助手消息ID
+          description: 助手消息 ID。
           type: string
         conversation_id:
-          description: 会话ID
+          description: 会话 ID。
           type: string
         message:
           $ref: '#/components/schemas/Message'
         status:
-          description: 状态
+          description: 状态。
           type: string
         user_message_id:
-          description: 用户消息ID
+          description: 用户消息 ID。
           type: string
     Content:
       type: object
@@ -82,7 +128,7 @@ components:
           type: string
     FinalAnswer:
       type: object
-      description: 最终结果
+      description: 最终结果。
       properties:
         answer:
           $ref: '#/components/schemas/Answer'
@@ -106,16 +152,16 @@ components:
         content:
           $ref: '#/components/schemas/Content'
         content_type:
-          description: 内容类型
+          description: 内容类型。
           type: string
         conversation_id:
-          description: 会话ID
+          description: 会话 ID。
           type: string
         id:
-          description: 消息ID
+          description: 消息 ID。
           type: string
         index:
-          description: 消息下标,用于标记消息在整个会话中的位置、顺序，比如基于 index 正序在前端按照时间线展示对话消息
+          description: 消息下标,用于标记消息在整个会话中的位置、顺序，比如基于 index 正序在前端按照时间线展示对话消息。
           type: integer
         reply_id:
           description: '回复ID,用于关联问答消息'
@@ -124,24 +170,24 @@ components:
           description: '角色 user, assistant'
           type: string
         status:
-          description: 消息状态
+          description: 消息状态。
           type: string
     MiddleAnswer:
       type: object
       properties:
         doc_retrieval:
-          description: 文档召回结果
+          description: 文档召回结果。
           type: object
         graph_retrieval:
-          description: 图谱召回结果
+          description: 图谱召回结果。
           type: object
         middle_output_vars:
-          description: 中间结果
+          description: 中间结果。
           items:
             type: object
           type: array
         progress:
-          description: dolphin执行过程
+          description: dolphin执行过程。
           items:
             $ref: '#/components/schemas/Progress'
           type: array
@@ -149,42 +195,42 @@ components:
       type: object
       properties:
         agent_name:
-          description: 兼容旧版本字段，代理名称，对于LLM输出通常为"main"，对于工具调用为工具名称
+          description: 兼容旧版本字段，代理名称，对于LLM输出通常为"main"，对于工具调用为工具名称。
           type: string
         answer:
-          description: 该阶段产生的答案或输出
+          description: 该阶段产生的答案或输出。
           type: string
         block_answer:
-          description: 块级别的答案输出
+          description: 块级别的答案输出。
           type: string
         input_message:
-          description: 输入消息，可能是字符串或消息对象数组
+          description: 输入消息，可能是字符串或消息对象数组。
           type: object
         interrupted:
-          description: 是否被中断
+          description: 是否被中断。
           type: boolean
         skill_info:
           $ref: '#/components/schemas/SkillInfo'
         stage:
-          description: 执行阶段类型
+          description: 执行阶段类型。
           enum:
             - llm (LLM输出)
             - skill (技能/工具调用)
             - assign (赋值操作)
           type: string
         status:
-          description: 执行状态
+          description: 执行状态。
           enum:
             - processing (进行中)
             - completed (已完成)
             - failed (失败)
           type: string
         think:
-          description: 思考过程记录
+          description: 思考过程记录。
           type: string
     RelatedQuestion:
       type: object
-      description: 相关查询
+      description: 相关查询。
       properties:
         query:
           type: string
@@ -196,20 +242,20 @@ components:
             $ref: '#/components/schemas/Arg'
           type: array
         checked:
-          description: 参数是否已验证
+          description: 参数是否已验证。
           type: boolean
         name:
-          description: 技能/工具名称
+          description: 技能/工具名称。
           type: string
         type:
-          description: 技能类型
+          description: 技能类型。
           enum:
             - TOOL
             - AGENT
             - MCP
           type: string
     SkillsProcessItem:
-      description: 技能处理结果
+      description: 技能处理结果。
       type: object
       properties:
         agent_name:
@@ -243,98 +289,3 @@ components:
           type: string
         type:
           type: string
-info:
-  title: Data Agent API
-  version: 1.0.0
-openapi: 3.0.0
-servers:
-  - url: https://dip.aishu.cn/api/agent-app/v1
-    description: 生产环境
-paths:
-  /app/{agent_id}/conversation:
-    post:
-      description: 创建会话
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                agent_id:
-                  description: agent ID
-                  type: string
-                agent_version:
-                  description: agent 版本，不传则默认使用最新发布版本
-                  type: string
-                executor_version:
-                  description: 智能体执行服务 ID
-                  type: string
-              required:
-                - agent_id
-                - agent_version
-        required: true
-        example:
-          agent_id: 01KAZKS30H0X0D8Z8K24FMRJK6
-          agent_version: v1
-          executor_version: v2
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ConversationResponse'
-          description: 创建会话成功
-  /app/{agent_id}/chat/completion:
-    post:
-      parameters:
-        - description: 用户或应用账号的 Bearer token
-          in: header
-          name: Authorization
-          required: true
-          schema:
-            type: string
-          example: Bearer ory_at_yhkn-kjRfYcivXUnMH9Rsdw4SzrkKSFFjNpglg06dRM.s1FWQ02zhWnS7NeKjupSGYmEXMzUa5XKp3RwS4BqZvg
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                agent_id:
-                  description: agent ID
-                  type: string
-                agent_version:
-                  description: agent 版本，不传则默认使用最新发布版本
-                  type: string
-                conversation_id:
-                  description: 会话ID
-                  type: string
-                custom_querys:
-                  description: 自定义输入变量，map[string]any
-                  type: object
-                inc_stream:
-                  description: 是否增量流式返回
-                  type: boolean
-                query:
-                  description: 用户输入的问题
-                  type: string
-                stream:
-                  description: 是否流式返回
-                  type: boolean
-              required:
-                - query
-                - agent_id
-                - conversation_id
-                - stream
-              type: object
-        required: true
-        example:
-          agent_id: 01KAZKS30H0X0D8Z8K24FMRJK6
-          query: 集群节点故障该如何处理
-          stream: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ChatResponse'
-          description: 成功

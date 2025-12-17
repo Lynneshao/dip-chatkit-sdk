@@ -5,6 +5,7 @@ import {
   ChatMessageType,
   EventStreamMessage,
   RoleType,
+  OnboardingInfo,
 } from '../types';
 
 /**
@@ -49,6 +50,40 @@ export class ChatKitDataAgent extends ChatKitBase<ChatKitDataAgentProps> {
     this.agentId = props.agentId;
     this.bearerToken = props.bearerToken;
     this.incStream = props.enableIncrementalStream ?? true;
+  }
+
+  /**
+   * 获取开场白和预置问题
+   * Data Agent 的 API 文档中没有明确的获取开场白接口，这里实现一个默认版本
+   * 注意：该方法是一个无状态无副作用的函数，不允许修改 state
+   * @returns 返回开场白信息，包含开场白文案和预置问题
+   */
+  public async getOnboardingInfo(): Promise<OnboardingInfo> {
+    try {
+      console.log('正在获取 Data Agent 配置...');
+
+      // 尝试调用 Agent 信息接口（如果存在）
+      // 注意：根据 API 文档，暂时没有明确的获取开场白的接口
+      // 这里返回默认的开场白信息
+      const onboardingInfo: OnboardingInfo = {
+        prologue: '你好！我是数据智能体助手，我可以帮你分析数据、回答问题。',
+        predefinedQuestions: [
+          '帮我分析一下最近的数据趋势',
+          '查询相关数据信息',
+          '数据异常该如何处理',
+        ],
+      };
+
+      console.log('Data Agent 开场白信息:', onboardingInfo);
+      return onboardingInfo;
+    } catch (error) {
+      console.error('获取 Data Agent 配置失败:', error);
+      // 返回默认开场白信息
+      return {
+        prologue: '你好！我是数据智能体助手，我可以帮你分析数据、回答问题。',
+        predefinedQuestions: [],
+      };
+    }
   }
 
   /**

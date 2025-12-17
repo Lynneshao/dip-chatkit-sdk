@@ -1,0 +1,11 @@
+openapi: 3.0.3
+info:
+  title: AISHU AI Data Platform API
+  version: "1.0.0"
+servers:
+  - url: /v1
+paths:
+  /app/{agent_id}/conversation:
+    $ref: ./data-agent/data-agent.paths.yaml#/paths/~1app~1{agent_id}~1conversation
+  /app/{agent_id}/chat/completion:
+    $ref: ./data-agent/data-agent.paths.yaml#/paths/~1app~1{agent_id}~1chat~1completion

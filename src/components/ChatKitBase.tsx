@@ -1,5 +1,5 @@
 import { Component } from 'react';
-import { ChatMessage, RoleType, ApplicationContext, ChatKitInterface, EventStreamMessage, ChatMessageType } from '../types';
+import { ChatMessage, RoleType, ApplicationContext, ChatKitInterface, EventStreamMessage, ChatMessageType, OnboardingInfo } from '../types';
 import MessageList from './MessageList';
 import InputArea from './InputArea';
 import Header from './Header';
@@ -46,6 +46,9 @@ export interface ChatKitBaseState {
 
   /** 当前正在流式更新的消息 ID */
   streamingMessageId: string | null;
+
+  /** 开场白信息，包含开场白文案和预置问题 */
+  onboardingInfo?: OnboardingInfo;
 }
 
 /**
@@ -68,8 +71,18 @@ export abstract class ChatKitBase<P extends ChatKitBaseProps = ChatKitBaseProps>
       applicationContext: props.defaultApplicationContext,
       isSending: false,
       streamingMessageId: null,
+      onboardingInfo: undefined,
     };
   }
+
+  /**
+   * 获取开场白和预置问题 (抽象方法，由子类实现)
+   * 该方法需要由子类继承并重写，以适配扣子、Dify 等 LLMOps 平台的接口
+   * 返回开场白信息结构体
+   * 注意：该方法是一个无状态无副作用的函数，不允许修改 state
+   * @returns 返回开场白信息，包含开场白文案和预置问题
+   */
+  public abstract getOnboardingInfo(): Promise<OnboardingInfo>;
 
   /**
    * 新建会话 (抽象方法，由子类实现)
@@ -120,7 +133,7 @@ export abstract class ChatKitBase<P extends ChatKitBaseProps = ChatKitBaseProps>
 
   /**
    * 创建新的会话
-   * 内部会调用子类实现的 generateConversation() 方法
+   * 内部会调用子类实现的 generateConversation() 和 getOnboardingInfo() 方法
    */
   public createConversation = async (): Promise<void> => {
     try {
@@ -130,10 +143,17 @@ export abstract class ChatKitBase<P extends ChatKitBaseProps = ChatKitBaseProps>
       // 调用子类实现的 generateConversation 方法创建新会话
       const newConversationID = await this.generateConversation();
 
-      // 更新会话 ID
-      this.setState({ conversationID: newConversationID });
+      // 调用子类实现的 getOnboardingInfo 方法获取开场白信息
+      const onboardingInfo = await this.getOnboardingInfo();
+
+      // 更新会话 ID 和开场白信息
+      this.setState({
+        conversationID: newConversationID,
+        onboardingInfo: onboardingInfo,
+      });
 
       console.log('新会话已创建, conversationID:', newConversationID);
+      console.log('开场白信息已加载:', onboardingInfo);
     } catch (error) {
       console.error('创建新会话失败:', error);
       throw error;
@@ -355,7 +375,7 @@ export abstract class ChatKitBase<P extends ChatKitBaseProps = ChatKitBaseProps>
     }
 
     const { title = 'Copilot', onClose } = this.props;
-    const { messages, textInput, applicationContext, isSending } = this.state;
+    const { messages, textInput, applicationContext, isSending, onboardingInfo } = this.state;
     const showPrologue = messages.length === 0;
 
     return (
@@ -370,7 +390,11 @@ export abstract class ChatKitBase<P extends ChatKitBaseProps = ChatKitBaseProps>
         {/* 消息列表区域或欢迎界面 */}
         <div className="flex-1 overflow-y-auto">
           {showPrologue ? (
-            <Prologue onQuestionClick={this.handleQuestionClick} />
+            <Prologue
+              onQuestionClick={this.handleQuestionClick}
+              prologue={onboardingInfo?.prologue}
+              predefinedQuestions={onboardingInfo?.predefinedQuestions}
+            />
           ) : (
             <MessageList messages={messages} />
           )}

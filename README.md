@@ -31,8 +31,15 @@ chatkit/
 ├── examples/                     # Demo 示例应用
 │   ├── chatkit_coze/             # 扣子 Demo
 │   └── chatkit_data_agent/       # Data Agent Demo
-├── api/                          # API Schema 定义
-│   └── data-agent.yaml           # Data Agent API Schema
+├── openapi/                      # OpenAPI 规范（Coze 与 Data Agent）
+│   ├── coze.openapi.yaml         # Coze API 入口
+│   ├── data-agent.openapi.yaml   # Data Agent API 入口
+│   ├── bots/                     # Coze Bot schemas 与 paths
+│   ├── chat/                     # Coze Chat schemas 与 paths
+│   └── data-agent/               # Data Agent 请求/响应 schemas 与 paths
+├── api/                          # 预留 API 目录
+├── design/                       # 设计文档
+├── public/                       # 静态资源
 └── package.json
 ```
 
@@ -57,6 +64,16 @@ npm run dev
 ```bash
 npm run build
 ```
+
+### 4. 配置 Coze 接口
+
+- 编辑 `examples/chatkit_coze/config.ts`，填入你的 `baseUrl`、`botId`、`apiToken` 和 `userId`。
+- 需要使用 https://www.coze.cn/ 的 Personal Access Token，并确保 Bot ID 与 API Token 均可用。
+
+### 5. 配置 Data Agent 接口
+
+- 编辑 `examples/chatkit_data_agent/config.ts`，填入你的 `baseUrl`、`agentId` 和包含 Bearer 前缀的 `bearerToken`。
+- 若使用代理前缀（如 `/data-agent`），需在本地代理配置中转发到真实的 Data Agent 网关。
 
 ## 使用方法
 
@@ -265,6 +282,6 @@ interface ChatKitInterface {
 - **Vite** - 构建工具
 - **react-markdown** - Markdown 渲染
 
-## License
+## 协议
 
 MIT

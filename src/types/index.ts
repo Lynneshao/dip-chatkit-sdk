@@ -85,10 +85,30 @@ export interface EventStreamMessage {
 }
 
 /**
+ * 开场白信息接口
+ * 包含开场白文案和预置问题
+ */
+export interface OnboardingInfo {
+  /** 开场白文案 */
+  prologue: string;
+  /** 预置问题列表 */
+  predefinedQuestions: Array<string>;
+}
+
+/**
  * ChatKit 接口
  * 定义了 ChatKit 的一些抽象方法
  */
 export interface ChatKitInterface {
+  /**
+   * 获取开场白和预置问题
+   * 该方法需要由子类继承并重写，以适配扣子、Dify 等 LLMOps 平台的接口
+   * 返回开场白信息结构体
+   * 注意：该方法是一个无状态无副作用的函数，不允许修改 state
+   * @returns 返回开场白信息，包含开场白文案和预置问题
+   */
+  getOnboardingInfo(): Promise<OnboardingInfo>;
+
   /**
    * 新建会话
    * 该方法需要由子类继承并重写，以适配扣子、Dify 等 LLMOps 平台的接口

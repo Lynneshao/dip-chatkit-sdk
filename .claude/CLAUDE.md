@@ -21,9 +21,10 @@
 ChatKitCoze 组件是专门适配 Coze 平台智能体 API 的智能体对话组件。
 ChatKitCoze 组件继承了 ChatKitBase 和 ChatKitInterface，ChatKitCoze 需要实现 ChatKitInterface 里的方法：
 * generateConversation(): 创建新的会话
-* sendMessage(): 调用扣子（Coze）的 API 实现对话的后端逻辑，API 文档参考：https://www.coze.cn/open/docs/developer_guides/chat_v3
+* getOnboardingInfo(): 获取会话开场白信息
+* sendMessage(): 调用扣子（Coze）的 API 实现对话的后端逻辑
 * reduceEventStreamMessage(): 解析扣子（Coze）输出的 EventStreamMessage，追加并返回字符串以供界面实现打字机效果。 
-注意：conversation_id 是在 URL 中的参数。
+在 openapi/coze 目录下找到 OpenAPI 文档。
 
 # ChatKitCoze Demo
 ChatKitCoze Demo 是一个简单的 Web 应用，该应用需要挂载 ChatKitCoze 组件。ChatKitCoze Demo 应用上有两个主要按钮：
@@ -56,12 +57,14 @@ ChatKitCoze Demo 是一个简单的 Web 应用，该应用需要挂载 ChatKitCo
 # ChatKitDataAgent 组件
 ChatKitDataAgent 组件是专门适配 AISHU Data Agent 平台智能体 API 的智能体对话组件。
 ChatKitDataAgent 组件继承了 ChatKitBase 和 ChatKitInterface，ChatKitDataAgent 需要实现 ChatKitInterface 里的方法：
-* generateConversation(): 创建新的会话，API 参考 api/data-agent.yaml 中的 Schema 定义。
-* sendMessage(): 调用 AISHU Data Agent 的API 实现对话的后端逻辑，API 参考 api/data-agent.yaml 中的 Schema 定义。
+* generateConversation(): 创建新的会话。
+* getOnboardingInfo(): 获取会话开场白信息。
+* sendMessage(): 调用 AISHU Data Agent 的API 实现对话的后端逻辑。
 * reduceEventStreamMessage(): 解析 AISHU Data Agent 输出的 EventStreamMessage，追加并返回字符串以供界面实现打字机效果。 注意：
-1. 当 key 仅包含 ["message"] 时，表示这是第一条文本输出，此时需要从 `content.content.final_answer.answer.text` 取首词输出
-2. 除了首词输出外，后续只从 key 包含 ["message", "final_answer"] 的 EventStreamMessage 中取 content 作为输出
-3. 如果 EventStreamMessage 的 action 是 "end"，则代表最后一条输出
+  1. 当 key 仅包含 ["message"] 时，表示这是第一条文本输出，此时需要从 `content.content.final_answer.answer.text` 取首词输出
+  2. 除了首词输出外，后续只从 key 包含 ["message", "final_answer"] 的 EventStreamMessage 中取 content 作为输出
+  3. 如果 EventStreamMessage 的 action 是 "end"，则代表最后一条输出
+在 openapi/adp 目录下找到 OpenAPI 文档。
 
 # ChatKitDataAgent Demo
 ChatKitDataAgent Demo 是一个简单的 Web 应用，该应用需要挂载 ChatKitDataAgent 组件。ChatKitDataAgent Demo 应用上有一个添加上下文的按钮，点击该按钮会将以下对象注入到 ChatKitDataAgent 的用户输入上下文中：

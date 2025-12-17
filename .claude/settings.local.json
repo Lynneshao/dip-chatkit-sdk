@@ -13,7 +13,11 @@
       "WebFetch(domain:accounts.feishu.cn)",
       "Bash(git checkout:*)",
       "Bash(npm run build:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "WebFetch(domain:www.figma.com)",
+      "mcp__figma-desktop__get_design_context",
+      "mcp__figma-desktop__get_screenshot",
+      "mcp__figma-desktop__get_metadata"
     ],
     "deny": [],
     "ask": []
