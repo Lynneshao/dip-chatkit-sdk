@@ -459,10 +459,16 @@ export class ChatKitDataAgent extends ChatKitBase<ChatKitDataAgentProps> {
           if (content?.stage === 'skill') {
             // 检查是否是 Web 搜索工具
             if (content.skill_info?.name === 'zhipu_search_tool') {
+              console.log('检测到 zhipu_search_tool');
+              console.log('完整的 content:', JSON.stringify(content, null, 2));
               // 构造 WebSearchQuery 并调用渲染方法
-              const searchQuery = this.extractWebSearchQuery(content.skill_info);
+              const searchQuery = this.extractWebSearchQuery(content);
+              console.log('提取的 searchQuery:', searchQuery);
               if (searchQuery) {
+                console.log('调用 appendWebSearchBlock，messageId:', messageId);
                 this.appendWebSearchBlock(messageId, searchQuery);
+              } else {
+                console.log('searchQuery 为 null，未调用 appendWebSearchBlock');
               }
             } else {
               // 其他工具，输出工具名称
@@ -504,27 +510,44 @@ export class ChatKitDataAgent extends ChatKitBase<ChatKitDataAgentProps> {
   }
 
   /**
-   * 从 skill_info 中提取 Web 搜索查询
+   * 从 Progress 对象中提取 Web 搜索查询
+   * 根据 OpenAPI 规范，搜索数据在 answer.choices[0].message.tool_calls 中
+   * tool_calls[0] 是 SearchIntent（输入），tool_calls[1] 是 SearchResult（输出）
    */
-  private extractWebSearchQuery(skillInfo: any): WebSearchQuery | null {
+  private extractWebSearchQuery(progress: any): WebSearchQuery | null {
     try {
-      const input = skillInfo?.input?.query || skillInfo?.input || '';
-      const output = skillInfo?.output;
+      // 从 answer.choices[0].message.tool_calls 中提取数据
+      const toolCalls = progress?.answer?.choices?.[0]?.message?.tool_calls;
 
-      if (!output || !Array.isArray(output)) {
+      if (!toolCalls || !Array.isArray(toolCalls) || toolCalls.length < 2) {
+        console.log('tool_calls 不存在或长度不足:', toolCalls);
         return null;
       }
 
-      const results: WebSearchResult[] = output.map((item: any) => ({
-        content: item.content || item.snippet || '',
-        icon: item.icon || item.favicon || '',
-        link: item.link || item.url || '',
-        media: item.media || item.source || '',
+      // tool_calls[0] 是 SearchIntent（输入）
+      const searchIntent = toolCalls[0];
+      const query = searchIntent?.search_intent?.query ||
+                    searchIntent?.search_intent?.keywords || '';
+
+      // tool_calls[1] 是 SearchResult（输出）
+      const searchResult = toolCalls[1];
+      const searchResultArray = searchResult?.search_result;
+
+      if (!searchResultArray || !Array.isArray(searchResultArray)) {
+        console.log('search_result 不存在或不是数组:', searchResultArray);
+        return null;
+      }
+
+      const results: WebSearchResult[] = searchResultArray.map((item: any) => ({
+        content: item.content || '',
+        icon: item.icon || '',
+        link: item.link || '',
+        media: item.media || '',
         title: item.title || '',
       }));
 
       return {
-        input,
+        input: query,
         results,
       };
     } catch (e) {
