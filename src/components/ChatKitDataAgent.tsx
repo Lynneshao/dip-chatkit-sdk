@@ -106,7 +106,7 @@ export class ChatKitDataAgent extends ChatKitBase<ChatKitDataAgentProps> {
 
     this.baseUrl = props.baseUrl || 'https://dip.aishu.cn/api/agent-app/v1';
     this.agentId = props.agentId;
-    this.agentVersion = props.agentVersion || 'v0';
+    this.agentVersion = props.agentVersion || 'latest';
     this.executorVersion = props.executorVersion || 'v2';
     this.businessDomain = props.businessDomain || 'bd_public';
 
