@@ -29,11 +29,13 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   }, [messages]);
 
   return (
-    <div className="px-5 py-3">
-      {messages.map((message) => (
-        <MessageItem key={message.messageId} message={message} />
-      ))}
-      <div ref={messagesEndRef} />
+    <div className="w-full flex justify-center">
+      <div className="w-full max-w-[960px] px-5 py-3">
+        {messages.map((message) => (
+          <MessageItem key={message.messageId} message={message} />
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
     </div>
   );
 };
