@@ -13,87 +13,66 @@ interface HeaderProps {
   /** 新建会话的回调函数 */
   onNewChat?: () => void;
 
-  /** 展开/收起的回调函数 */
-  onExpand?: () => void;
-
-  /** 更多选项的回调函数 */
-  onMore?: () => void;
+  /** 查看历史对话的回调函数 */
+  onHistory?: () => void;
 }
 
 /**
  * Header 组件
- * ChatKit 的头部组件，包含 Logo、标题和操作按钮
+ * Assistant 的头部组件，右侧显示历史对话和新对话按钮
  */
 const Header: React.FC<HeaderProps> = ({
-  title = 'Copilot',
-  onClose,
   onNewChat,
-  onExpand,
-  onMore,
+  onHistory,
 }) => {
   return (
-    <div className="relative h-14 w-full bg-white">
-      <div className="absolute left-[23px] top-3 h-8 w-[440px]">
-        {/* Logo 和标题 */}
-        <div className="absolute left-0 top-0 flex items-center h-8">
-          {/* AI 助手图标 */}
-          <div className="w-8 h-8">
-            <img src="/icons/assistant.svg" alt="Copilot" className="w-8 h-8" />
-          </div>
-          {/* 标题 */}
-          <div className="absolute left-[40px] top-1/2 -translate-y-1/2">
-            <p className="font-medium text-[18px] leading-4 text-black whitespace-nowrap" style={{ fontFamily: 'Noto Sans SC' }}>
-              {title}
-            </p>
-          </div>
-        </div>
+    <div className="w-full h-[76px] bg-white flex items-center justify-end px-6 border-b border-gray-100">
+      {/* 右侧操作区 */}
+      <div className="flex items-center gap-4">
+        {/* 相关历史对话 */}
+        {onHistory && (
+          <button
+            onClick={onHistory}
+            className="flex items-center gap-2 text-[14px] text-[rgba(0,0,0,0.85)] hover:text-[#1890ff] transition-colors"
+            style={{ fontFamily: 'Noto Sans SC' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M8 14C11.3137 14 14 11.3137 14 8C14 4.68629 11.3137 2 8 2C4.68629 2 2 4.68629 2 8C2 11.3137 4.68629 14 8 14Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+              <path
+                d="M8 5V8L10 10"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <span className="leading-[30px]">相关历史对话</span>
+          </button>
+        )}
 
-        {/* 操作按钮组 - 从右到左：Close -> Expand -> New Chat -> More */}
-        <div className="absolute right-0 top-0 h-8 flex items-center">
-          {/* 更多按钮 */}
-          {onMore && (
-            <button
-              onClick={onMore}
-              className="w-5 h-5 flex items-center justify-center hover:opacity-70 transition-opacity"
-              title="更多选项"
-            >
-              <img src="/icons/more.svg" alt="更多" className="w-5 h-5" />
-            </button>
-          )}
-
-          {/* 新建对话按钮 */}
-          {onNewChat && (
-            <button
-              onClick={onNewChat}
-              className="ml-2 w-[14px] h-[14px] flex items-center justify-center hover:opacity-70 transition-opacity"
-              title="新建会话"
-            >
-              <img src="/icons/new.svg" alt="新建会话" className="w-[14px] h-[14px]" />
-            </button>
-          )}
-
-          {/* 展开按钮 */}
-          {onExpand && (
-            <button
-              onClick={onExpand}
-              className="ml-2 w-[14px] h-[13px] flex items-center justify-center hover:opacity-70 transition-opacity"
-              title="展开"
-            >
-              <img src="/icons/expand.svg" alt="展开" className="w-[14px] h-[13px]" />
-            </button>
-          )}
-
-          {/* 关闭按钮 */}
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="ml-2 w-4 h-4 flex items-center justify-center hover:opacity-70 transition-opacity"
-              title="关闭"
-            >
-              <img src="/icons/close.svg" alt="关闭" className="w-4 h-4" />
-            </button>
-          )}
-        </div>
+        {/* 新对话 */}
+        {onNewChat && (
+          <button
+            onClick={onNewChat}
+            className="flex items-center gap-2 text-[14px] text-[rgba(0,0,0,0.85)] hover:text-[#1890ff] transition-colors"
+            style={{ fontFamily: 'Noto Sans SC' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M14 9H9V14H7V9H2V7H7V2H9V7H14V9Z"
+                fill="currentColor"
+              />
+            </svg>
+            <span className="leading-[30px]">新对话</span>
+          </button>
+        )}
       </div>
     </div>
   );

@@ -16,30 +16,14 @@ interface PrologueProps {
 
 /**
  * Prologue 组件
- * ChatKit 的欢迎界面，显示欢迎语和推荐问题
+ * Assistant 的欢迎界面，显示开场白和预设问题
  */
 const Prologue: React.FC<PrologueProps> = ({
   onQuestionClick,
   prologue,
   predefinedQuestions
 }) => {
-  // 默认欢迎语
-  const defaultPrologue = '你好！我是 Copilot，你的智能浏览助手。我可以帮你理解和分析当前页面的内容。';
-
-  // 默认推荐问题列表
-  const defaultQuestions = [
-    '🔍 我现在有哪些需要优先处理的高风险工单？',
-    '🛠️ 处理 [问题类型] 工单有什么推荐方案？',
-    '💡 如何避免处理 [技术领域] 问题的常见错误？',
-  ];
-
-  // 使用传入的开场白或默认开场白
-  const displayPrologue = prologue || defaultPrologue;
-
-  // 使用传入的预置问题或默认问题
-  const questions = predefinedQuestions && predefinedQuestions.length > 0
-    ? predefinedQuestions
-    : defaultQuestions;
+  const questions = predefinedQuestions || [];
 
   /**
    * 处理问题点击
@@ -51,28 +35,33 @@ const Prologue: React.FC<PrologueProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-4 px-6 pt-28 pb-4">
-      {/* 欢迎语 */}
-      <p
-        className="text-[14px] leading-[17px] text-[rgba(0,0,0,0.65)]"
-        style={{ fontFamily: 'Noto Sans SC' }}
-      >
-        {displayPrologue}
-      </p>
+    <div className="w-full px-5 py-8">
+      {/* 开场白 */}
+      {prologue && (
+        <p className="text-[20px] leading-normal text-[rgba(0,0,0,0.85)] font-normal mb-10" style={{ fontFamily: 'Noto Sans SC' }}>
+          {prologue}
+        </p>
+      )}
 
-      {/* 推荐问题列表 */}
-      <div className="flex flex-col gap-3">
-        {questions.map((question, index) => (
-          <button
-            key={index}
-            onClick={() => handleQuestionClick(question)}
-            className="w-full bg-white border border-[rgba(0,0,0,0.1)] rounded-[6px] px-3 py-2 text-left text-[14px] leading-6 text-black hover:border-[#3b9be0] hover:bg-[rgba(18,110,227,0.04)] transition-all"
-            style={{ fontFamily: 'Noto Sans SC' }}
-          >
-            {question}
-          </button>
-        ))}
-      </div>
+      {/* 预设问题网格 */}
+      {questions.length > 0 && (
+        <div className="grid grid-cols-4 gap-3">
+          {questions.map((question, index) => (
+            <button
+              key={index}
+              onClick={() => handleQuestionClick(question)}
+              className="bg-white border border-[rgba(0,0,0,0.1)] rounded-[6px] px-4 py-3 text-left text-[14px] leading-[22px] text-[rgba(0,0,0,0.85)] hover:border-[#3b9be0] hover:bg-[rgba(18,110,227,0.04)] transition-all flex items-start gap-2"
+              style={{ fontFamily: 'Noto Sans SC' }}
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="mt-1.5 flex-shrink-0">
+                <circle cx="6" cy="6" r="5" stroke="#1890ff" strokeWidth="1.5" fill="none" />
+                <path d="M6 3V6L8 8" stroke="#1890ff" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              <span>{question}</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

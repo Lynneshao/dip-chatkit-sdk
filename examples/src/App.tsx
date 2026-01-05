@@ -1,19 +1,32 @@
 import React, { useMemo, useState } from 'react';
 import { ChatKitCozeDemo } from '../chatkit_coze/App';
 import { ChatKitDataAgentDemo } from '../chatkit_data_agent/App';
+import { DIPAssistantDemo } from '../chatkit_data_agent/AssistantApp';
+import { DIPAssistantOnlyDemo } from '../chatkit_data_agent/AssistantOnlyApp';
 
 /**
- * Demo 入口,提供两个示例:
- * 1. ChatKitCoze
- * 2. ChatKitDataAgent
+ * Demo 入口,提供三个示例:
+ * 1. ChatKitCoze - Coze 平台 Copilot
+ * 2. DIP Copilot - AISHU DIP 平台 Copilot
+ * 3. DIP Assistant - AISHU DIP 平台 Assistant
  */
 const App: React.FC = () => {
-  const [activeDemo, setActiveDemo] = useState<'coze' | 'dataAgent'>('coze');
+  const [activeDemo, setActiveDemo] = useState<'coze' | 'dipCopilot' | 'dipAssistant' | 'dipAssistantOnly'>('coze');
 
-  const demoTitle = useMemo(
-    () => (activeDemo === 'coze' ? 'ChatKitCoze' : 'ChatKitDataAgent'),
-    [activeDemo]
-  );
+  const demoTitle = useMemo(() => {
+    switch (activeDemo) {
+      case 'coze':
+        return 'ChatKitCoze';
+      case 'dipCopilot':
+        return 'DIP Copilot';
+      case 'dipAssistant':
+        return 'DIP Assistant';
+      case 'dipAssistantOnly':
+        return 'DIP Assistant (Standalone)';
+      default:
+        return 'ChatKit Demo';
+    }
+  }, [activeDemo]);
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -31,17 +44,37 @@ const App: React.FC = () => {
             }`}
             onClick={() => setActiveDemo('coze')}
           >
-            ChatKitCoze Demo
+            Coze Copilot Demo
           </button>
           <button
             className={`text-left px-3 py-2 rounded-lg border transition-colors ${
-              activeDemo === 'dataAgent'
+              activeDemo === 'dipCopilot'
                 ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
                 : 'border-gray-200 hover:border-indigo-200 text-gray-700'
             }`}
-            onClick={() => setActiveDemo('dataAgent')}
+            onClick={() => setActiveDemo('dipCopilot')}
           >
-            ChatKitDataAgent Demo
+            DIP Copilot Demo
+          </button>
+          <button
+            className={`text-left px-3 py-2 rounded-lg border transition-colors ${
+              activeDemo === 'dipAssistant'
+                ? 'border-purple-500 bg-purple-50 text-purple-700'
+                : 'border-gray-200 hover:border-purple-200 text-gray-700'
+            }`}
+            onClick={() => setActiveDemo('dipAssistant')}
+          >
+            DIP Assistant Demo
+          </button>
+          <button
+            className={`text-left px-3 py-2 rounded-lg border transition-colors ${
+              activeDemo === 'dipAssistantOnly'
+                ? 'border-green-500 bg-green-50 text-green-700'
+                : 'border-gray-200 hover:border-green-200 text-gray-700'
+            }`}
+            onClick={() => setActiveDemo('dipAssistantOnly')}
+          >
+            DIP Assistant (Standalone)
           </button>
         </div>
         <div className="text-xs text-gray-500">
@@ -49,7 +82,10 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {activeDemo === 'coze' ? <ChatKitCozeDemo /> : <ChatKitDataAgentDemo />}
+      {activeDemo === 'coze' && <ChatKitCozeDemo />}
+      {activeDemo === 'dipCopilot' && <ChatKitDataAgentDemo />}
+      {activeDemo === 'dipAssistant' && <DIPAssistantDemo />}
+      {activeDemo === 'dipAssistantOnly' && <DIPAssistantOnlyDemo />}
     </div>
   );
 };
