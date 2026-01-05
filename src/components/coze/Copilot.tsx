@@ -341,6 +341,36 @@ export class ChatKitCoze extends ChatKitBase<ChatKitCozeProps> {
   }
 
   /**
+   * 获取历史会话列表 (Coze 暂不支持)
+   * @param _page 分页页码
+   * @param _size 每页返回条数
+   * @returns 返回空数组
+   */
+  public async getConversations(_page?: number, _size?: number): Promise<import('../../types').ConversationHistory[]> {
+    console.warn('Coze 平台暂不支持获取历史会话列表功能');
+    return [];
+  }
+
+  /**
+   * 获取指定会话 ID 的对话消息列表 (Coze 暂不支持)
+   * @param _conversationId 会话 ID
+   * @returns 返回空数组
+   */
+  public async getConversationMessages(_conversationId: string): Promise<ChatMessage[]> {
+    console.warn('Coze 平台暂不支持获取会话消息列表功能');
+    return [];
+  }
+
+  /**
+   * 删除指定 ID 的会话 (Coze 暂不支持)
+   * @param _conversationID 会话 ID
+   * @returns 返回 Promise，直接 resolve
+   */
+  public async deleteConversation(_conversationID: string): Promise<void> {
+    console.warn('Coze 平台暂不支持删除会话功能');
+  }
+
+  /**
    * 渲染 Copilot 模式界面
    */
   render() {

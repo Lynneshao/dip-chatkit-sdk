@@ -35,4 +35,5 @@ export type {
   ApplicationContext,
   ChatKitInterface,
   EventStreamMessage,
+  ConversationHistory,
 } from './types';

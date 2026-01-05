@@ -227,6 +227,35 @@ export abstract class ChatKitBase<P extends ChatKitBaseProps = ChatKitBaseProps>
   public abstract terminateConversation(conversationId: string): Promise<void>;
 
   /**
+   * 获取历史会话列表 (抽象方法，由子类实现)
+   * 该方法需要由子类继承并重写，以适配扣子、Dify 等 LLMOps 平台的接口。
+   * 注意：该方法是一个无状态无副作用的函数，不允许修改 state。
+   * @param page 分页页码，默认为 1
+   * @param size 每页返回条数，默认为 10
+   * @returns 返回历史会话列表
+   */
+  public abstract getConversations(page?: number, size?: number): Promise<import('../../types').ConversationHistory[]>;
+
+  /**
+   * 获取指定会话 ID 的对话消息列表 (抽象方法，由子类实现)
+   * 该方法需要由子类继承并重写，以适配扣子、Dify 等 LLMOps 平台的接口。
+   * 如果对话消息是 AI 助手消息，则需要调用 reduceAssistantMessage() 解析消息。
+   * 注意：该方法是一个无状态无副作用的函数，不允许修改 state。
+   * @param conversationId 会话 ID
+   * @returns 返回对话消息列表
+   */
+  public abstract getConversationMessages(conversationId: string): Promise<ChatMessage[]>;
+
+  /**
+   * 删除指定 ID 的会话 (抽象方法，由子类实现)
+   * 该方法需要由子类继承并重写，以适配扣子、Dify 等 LLMOps 平台的接口。
+   * 注意：该方法是一个无状态无副作用的函数，不允许修改 state。
+   * @param conversationID 会话 ID
+   * @returns 返回 Promise，成功时 resolve，失败时 reject
+   */
+  public abstract deleteConversation(conversationID: string): Promise<void>;
+
+  /**
    * 向 ChatKit 注入应用上下文
    * @param ctx 要注入的应用上下文
    */
@@ -348,6 +377,31 @@ export abstract class ChatKitBase<P extends ChatKitBaseProps = ChatKitBaseProps>
     } finally {
       // 无论成功或失败，都取消加载状态
       this.setState({ isLoadingOnboarding: false });
+    }
+  };
+
+  /**
+   * 加载历史会话
+   * 该方法从后端加载指定 ID 的历史会话消息，并更新到组件状态中
+   * @param conversationId 要加载的会话 ID
+   */
+  public loadConversation = async (conversationId: string): Promise<void> => {
+    try {
+      // 调用子类实现的 getConversationMessages 方法获取会话消息
+      const messages = await this.getConversationMessages(conversationId);
+
+      // 更新会话 ID 和消息列表
+      this.setState({
+        conversationID: conversationId,
+        messages: messages,
+        onboardingInfo: undefined, // 清除开场白信息
+      });
+
+      console.log('历史会话已加载, conversationID:', conversationId);
+      console.log('加载了', messages.length, '条消息');
+    } catch (error) {
+      console.error('加载历史会话失败:', error);
+      throw error;
     }
   };
 

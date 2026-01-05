@@ -163,6 +163,25 @@ export interface WebSearchQuery {
 }
 
 /**
+ * 历史会话记录接口
+ * 一条历史会话记录
+ */
+export interface ConversationHistory {
+  /** 会话 ID */
+  conversationID: string;
+  /** 会话标题 */
+  title: string;
+  /** 会话创建时间（Unix 时间戳） */
+  created_at: number;
+  /** 会话最后更新时间（Unix 时间戳） */
+  updated_at: number;
+  /** 最新会话消息下标 */
+  message_index?: number;
+  /** 最新已读的会话消息下标 */
+  read_message_index?: number;
+}
+
+/**
  * ChatKit 接口
  * 定义了 ChatKit 的一些抽象方法
  */
@@ -236,4 +255,33 @@ export interface ChatKitInterface {
    * @returns 返回 Promise，成功时 resolve，失败时 reject
    */
   terminateConversation(conversationId: string): Promise<void>;
+
+  /**
+   * 获取历史会话列表
+   * 该方法需要由子类继承并重写，以适配扣子、Dify 等 LLMOps 平台的接口。
+   * 注意：该方法是一个无状态无副作用的函数，不允许修改 state。
+   * @param page 分页页码，默认为 1
+   * @param size 每页返回条数，默认为 10
+   * @returns 返回历史会话列表
+   */
+  getConversations(page?: number, size?: number): Promise<ConversationHistory[]>;
+
+  /**
+   * 获取指定会话 ID 的对话消息列表
+   * 该方法需要由子类继承并重写，以适配扣子、Dify 等 LLMOps 平台的接口。
+   * 如果对话消息是 AI 助手消息，则需要调用 reduceAssistantMessage() 解析消息。
+   * 注意：该方法是一个无状态无副作用的函数，不允许修改 state。
+   * @param conversationId 会话 ID
+   * @returns 返回对话消息列表
+   */
+  getConversationMessages(conversationId: string): Promise<ChatMessage[]>;
+
+  /**
+   * 删除指定 ID 的会话
+   * 该方法需要由子类继承并重写，以适配扣子、Dify 等 LLMOps 平台的接口。
+   * 注意：该方法是一个无状态无副作用的函数，不允许修改 state。
+   * @param conversationID 会话 ID
+   * @returns 返回 Promise，成功时 resolve，失败时 reject
+   */
+  deleteConversation(conversationID: string): Promise<void>;
 }

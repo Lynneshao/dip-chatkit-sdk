@@ -5,6 +5,8 @@ import {
   WebSearchQuery,
   WebSearchResult,
   RoleType,
+  ConversationHistory,
+  BlockType,
 } from '../../types';
 import { Constructor } from '../../utils/mixins';
 
@@ -757,6 +759,270 @@ export function DIPBaseMixin<TBase extends Constructor>(Base: TBase) {
         }
 
         // 不需要刷新 token，直接抛出错误
+        throw error;
+      }
+    }
+
+    /**
+     * 获取历史会话列表
+     * 调用 DIP 的 GET /app/{agent_id}/conversation 接口获取会话列表
+     * API 端点: GET /app/{agent_id}/conversation?page={page}&size={size}
+     * 注意：该方法是一个无状态无副作用的函数，不允许修改 state
+     * @param page 分页页码，默认为 1
+     * @param size 每页返回条数，默认为 10
+     * @returns 返回历史会话列表
+     */
+    public async getConversations(page: number = 1, size: number = 10): Promise<ConversationHistory[]> {
+      try {
+        console.log('正在获取历史会话列表...');
+
+        // 构造 URL，包含分页参数
+        const url = `${this.dipBaseUrl}/app/${this.dipId}/conversation?page=${page}&size=${size}`;
+
+        // 使用 executeDataAgentWithTokenRefresh 包装 API 调用，支持 token 刷新和重试
+        const result = await this.executeDataAgentWithTokenRefresh(async () => {
+          const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${this.dipToken}`,
+            },
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            const error: any = new Error(`获取历史会话列表失败: ${response.status} - ${errorText}`);
+            error.status = response.status;
+            error.body = errorText;
+            throw error;
+          }
+
+          return await response.json();
+        });
+
+        // 从响应中提取会话列表
+        const entries = result.data?.entries || result.entries || [];
+
+        // 将 API 响应转换为 ConversationHistory 格式
+        const conversations: ConversationHistory[] = entries.map((item: any) => ({
+          conversationID: item.id || '',
+          title: item.title || '未命名会话',
+          created_at: item.create_time || 0,
+          updated_at: item.update_time || 0,
+          message_index: item.message_index,
+          read_message_index: item.read_message_index,
+        }));
+
+        console.log(`成功获取 ${conversations.length} 条历史会话`);
+        return conversations;
+      } catch (error) {
+        console.error('获取历史会话列表失败:', error);
+        // 返回空数组，允许在失败的情况下继续
+        return [];
+      }
+    }
+
+    /**
+     * 获取指定会话 ID 的对话消息列表
+     * 调用 DIP 的 GET /app/{agent_id}/conversation/{conversation_id} 接口获取会话详情
+     * 如果对话消息是 AI 助手消息，则需要调用 reduceAssistantMessage() 解析消息
+     * API 端点: GET /app/{agent_id}/conversation/{conversation_id}
+     * 注意：该方法是一个无状态无副作用的函数，不允许修改 state
+     * @param conversationId 会话 ID
+     * @returns 返回对话消息列表
+     */
+    public async getConversationMessages(conversationId: string): Promise<ChatMessage[]> {
+      try {
+        console.log('正在获取会话消息列表，conversationId:', conversationId);
+
+        // 构造 URL
+        const url = `${this.dipBaseUrl}/app/${this.dipId}/conversation/${conversationId}`;
+
+        // 使用 executeDataAgentWithTokenRefresh 包装 API 调用，支持 token 刷新和重试
+        const result = await this.executeDataAgentWithTokenRefresh(async () => {
+          const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${this.dipToken}`,
+            },
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            const error: any = new Error(`获取会话消息列表失败: ${response.status} - ${errorText}`);
+            error.status = response.status;
+            error.body = errorText;
+            throw error;
+          }
+
+          return await response.json();
+        });
+
+        // 从响应中提取消息列表
+        const messages = result.data?.Messages || result.Messages || [];
+
+        // 将 API 响应转换为 ChatMessage 格式
+        const chatMessages: ChatMessage[] = [];
+
+        for (const msg of messages) {
+          const messageId = msg.id || `msg-${Date.now()}-${Math.random()}`;
+          const origin = msg.origin || 'user';
+
+          if (origin === 'user') {
+            // 用户消息
+            const userMessage: ChatMessage = {
+              messageId,
+              role: {
+                name: '用户',
+                type: RoleType.USER,
+                avatar: '',
+              },
+              content: [],
+            };
+
+            // 从 content 中提取文本
+            try {
+              const contentObj = typeof msg.content === 'string' ? JSON.parse(msg.content) : msg.content;
+              const text = contentObj?.text || '';
+              if (text) {
+                userMessage.content.push({
+                  type: BlockType.TEXT,
+                  content: text,
+                });
+              }
+            } catch (e) {
+              console.error('解析用户消息内容失败:', e);
+            }
+
+            chatMessages.push(userMessage);
+          } else if (origin === 'assistant') {
+            // AI 助手消息
+            // 根据文档第四节"解析历史对话消息"的流程处理
+            try {
+              // 1. 对 content 进行 JSON 反序列化
+              const contentObj = typeof msg.content === 'string' ? JSON.parse(msg.content) : msg.content;
+
+              const aiMessage: ChatMessage = {
+                messageId,
+                role: {
+                  name: 'AI 助手',
+                  type: RoleType.ASSISTANT,
+                  avatar: '',
+                },
+                content: [],
+              };
+
+              // 2. 先处理 middle_answer.progress 数组
+              const middleAnswer = contentObj?.middle_answer;
+              if (middleAnswer?.progress && Array.isArray(middleAnswer.progress)) {
+                for (const progressItem of middleAnswer.progress) {
+                  if (progressItem.stage === 'skill') {
+                    // 处理技能调用
+                    const skillName = progressItem.skill_info?.name;
+                    if (skillName === 'zhipu_search_tool') {
+                      // Web 搜索
+                      const choices = progressItem.answer?.choices;
+                      if (choices && Array.isArray(choices)) {
+                        const webSearchQuery: WebSearchQuery = {
+                          input: progressItem.skill_info?.args?.query || '',
+                          results: choices.map((choice: any) => ({
+                            content: choice.content || '',
+                            icon: choice.icon || '',
+                            link: choice.link || '',
+                            media: choice.media || '',
+                            title: choice.title || '',
+                          })),
+                        };
+                        aiMessage.content.push({
+                          type: BlockType.WEB_SEARCH,
+                          content: webSearchQuery,
+                        });
+                      }
+                    } else {
+                      // 其他技能，显示技能名称
+                      aiMessage.content.push({
+                        type: BlockType.TEXT,
+                        content: `调用工具: ${skillName}`,
+                      });
+                    }
+                  } else if (progressItem.stage === 'llm') {
+                    // LLM 回答
+                    if (progressItem.answer) {
+                      aiMessage.content.push({
+                        type: BlockType.MARKDOWN,
+                        content: progressItem.answer,
+                      });
+                    }
+                  }
+                }
+              }
+
+              // 3. 处理 final_answer
+              const finalAnswerText = contentObj?.final_answer?.answer?.text;
+              if (finalAnswerText) {
+                aiMessage.content.push({
+                  type: BlockType.MARKDOWN,
+                  content: finalAnswerText,
+                });
+              }
+
+              chatMessages.push(aiMessage);
+            } catch (e) {
+              console.error('解析 AI 助手消息失败:', e);
+            }
+          }
+        }
+
+        console.log(`成功获取 ${chatMessages.length} 条对话消息`);
+        return chatMessages;
+      } catch (error) {
+        console.error('获取会话消息列表失败:', error);
+        // 返回空数组，允许在失败的情况下继续
+        return [];
+      }
+    }
+
+    /**
+     * 删除指定 ID 的会话
+     * 调用 DIP 的 DELETE /app/{agent_id}/conversation/{conversation_id} 接口删除会话
+     * API 端点: DELETE /app/{agent_id}/conversation/{conversation_id}
+     * 注意：该方法是一个无状态无副作用的函数，不允许修改 state
+     * @param conversationID 会话 ID
+     * @returns 返回 Promise，成功时 resolve，失败时 reject
+     */
+    public async deleteConversation(conversationID: string): Promise<void> {
+      try {
+        console.log('正在删除会话，conversationID:', conversationID);
+
+        // 构造 URL
+        const url = `${this.dipBaseUrl}/app/${this.dipId}/conversation/${conversationID}`;
+
+        // 使用 executeDataAgentWithTokenRefresh 包装 API 调用，支持 token 刷新和重试
+        await this.executeDataAgentWithTokenRefresh(async () => {
+          const response = await fetch(url, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${this.dipToken}`,
+            },
+          });
+
+          // 204 No Content 表示删除成功
+          if (!response.ok && response.status !== 204) {
+            const errorText = await response.text();
+            const error: any = new Error(`删除会话失败: ${response.status} - ${errorText}`);
+            error.status = response.status;
+            error.body = errorText;
+            throw error;
+          }
+
+          return response;
+        });
+
+        console.log('会话删除成功');
+      } catch (error) {
+        console.error('删除会话失败:', error);
         throw error;
       }
     }

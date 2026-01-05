@@ -1,4 +1,21 @@
 components:
+  parameters:
+    pageOffset:
+      name: page
+      description: 分页页码
+      in: query
+      schema:
+        type: integer
+        default: 1
+      required: false
+    pageLimit:
+      name: size
+      description: 每页返回条数
+      in: query
+      schema:
+        type: integer
+        default: 10
+      required: false
   schemas:
     CreateConversationRequest:
       type: object
@@ -9,7 +26,7 @@ components:
           description: agent ID。
         agent_version:
           type: string
-          description: agent 版本，“v0“表示最新版本
+          description: agent 版本，“latest“表示最新版本
         executor_version:
           type: string
           description: 智能体执行引擎版本，最新为“v2“
@@ -276,3 +293,110 @@ components:
                 desciption: 参数值
                 type: string
       
+    ConversationListResponse:
+      type: object
+      summary: 历史会话列表
+      properties:
+        total_count:
+          type: integer
+          description: 结果总数
+        entries:
+          type: array
+          description: 会话列表
+          items:
+            $ref: '#/ConversationItem'
+
+    ConversationItem:
+      description: 单条历史会话
+      type: object
+      properties:
+        id:
+          type: string
+          description: 会话 ID
+        title:
+          type: string
+          description: 会话标题
+        message_index:
+          type: integer
+          description: 最新会话消息下标
+        read_message_index:
+          type: integer
+          description: 最新已读的会话消息下标
+        create_time:
+          type: integer
+          description: 创建时间
+        update_time:
+          type: integer
+          description: 更新时间
+      required:
+        - id
+        - title
+
+    ConversationDetail:
+      description: 会话详情
+      type: object
+      properties:
+        id:
+          type: string
+          description: 会话ID
+        title:
+          type: string
+          description: 会话标题
+        Messages:
+          type: array
+          description: 会话消息列表
+          items:
+            $ref: '#/ConversationMessage'
+        create_time:
+          type: integer
+          description: 创建时间
+        update_time:
+          type: integer
+          description: 更新时间
+      required:
+        - id
+        - title
+
+    ConversationMessage:
+      description: 会话消息
+      type: object
+      properties:
+        id:
+          type: string
+          description: 消息 ID
+        conversation_id:
+          type: string
+          description: 会话 ID
+        index:
+          type: integer
+          description: 消息下标
+          example: 0
+        origin:
+          type: string
+          enum: [user, assistant]
+          description: |
+            消息发送角色:
+              - user：用户
+              - assistant：助手
+        content(when origin=user):
+          type: string
+          description: 用户消息内容
+          properties:
+            text:
+              type: string
+              description: 文本内容
+        content(when origin=assistant):
+          type: string
+          description: |
+            AI 助手消息内容，经过 JSON 反序列化之后，会得到和 #/components/schemas/Message/content 相同的结构
+        create_time:
+          type: integer
+          description: 消息创建时间
+        update_time:
+          type: integer
+          description: 消息更新时间
+      required:
+        - id
+        - conversation_id
+        - index
+        - origin

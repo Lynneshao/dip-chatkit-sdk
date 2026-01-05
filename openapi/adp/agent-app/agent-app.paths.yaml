@@ -1,10 +1,31 @@
 paths:
   /app/{agent_id}/conversation:
+    get:
+      summary: 获取会话列表
+      tags:
+      - 会话管理
+      parameters:
+        - name: agent_id
+          in: path
+          required: true
+          description: Agent ID。
+          schema:
+            type: string
+        - $ref: ./agent-app.schemas.yaml#/components/parameters/pageOffset
+        - $ref: ./agent-app.schemas.yaml#/components/parameters/pageLimit
+      responses:
+        '200':
+          description: 会话列表获取成功
+          content:
+            application/json:
+              schema:
+                $ref: ./agent-app.schemas.yaml#/components/schemas/ConversationListResponse
     post:
       tags:
         - agent-app
       operationId: createConversation
-      summary: 创建会话
+      summary: 
+        - 会话管理
       description: 创建 Data Agent 会话。
       parameters:
         - name: agent_id
@@ -37,6 +58,53 @@ paths:
               schema:
                 $ref: ./agent-app.schemas.yaml#/components/schemas/ConversationResponse
 
+  /app/{agent_id}/conversation/{conversation_id}:
+    get:
+      summary: 获取会话详情
+      tags:
+      - 会话管理
+      parameters:
+      - name: agent_id
+        in: path
+        required: true
+        description: Agent ID。
+        schema:
+          type: string
+      - name: conversation_id
+        in: path
+        schema:
+          type: string
+        required: true
+        description: 会话 ID
+      responses:
+        '200':
+          description: 会话获取成功
+          content:
+            application/json:
+              schema:
+                $ref: ./agent-app.schemas.yaml#/components/schemas/ConversationDetail
+      
+    delete:
+      summary: 删除指定 ID 的会话
+      tags:
+        - 会话管理
+      parameters:
+        - name: agent_id
+          in: path
+          required: true
+          description: Agent ID。
+          schema:
+            type: string
+        - name: conversation_id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: 会话 ID
+      responses:
+        '204':
+          description: 删除成功
+                
   /app/{agent_id}/chat/completion:
     post:
       tags:
